@@ -2,8 +2,9 @@ from .db import get_connection
 
 TABLES = [
     "manufacturers", "categories", "components",
-    "motors", "batteries", "propellers", "frames", "escs",
-    "flight_controllers", "stock", "drones", "drone_parts",
+    "frames", "motors", "propellers", "batteries", "escs", "flight_controllers",
+    "stacks", "cameras", "vtx", "antennas", "receivers", "gps_modules",
+    "stock", "drones", "drone_parts",
 ]
 
 
