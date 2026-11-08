@@ -6,7 +6,7 @@ CREATE TABLE manufacturers (
     country TEXT,
     website TEXT
 );
-
+ 
 CREATE TABLE categories (
     id   SERIAL PRIMARY KEY,
     code TEXT UNIQUE NOT NULL,
