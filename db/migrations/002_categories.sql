@@ -12,4 +12,7 @@ INSERT INTO categories (code, name) VALUES
     ('vtx',     'Відеопередавач'),
     ('rx',      'Приймач'),
     ('gps',     'GPS'),
+    ('stack',   'Стек (FC + ESC)'),
+    ('antenna', 'Антена'),
     ('other',   'Інше');
+    
