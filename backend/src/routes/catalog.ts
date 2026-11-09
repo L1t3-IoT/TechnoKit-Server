@@ -7,7 +7,7 @@ import { categories, products } from '../db/schema.js';
 const query = z.object({
   category: z.string().optional(),
   q: z.string().trim().max(100).optional(),
-  cells: z.coerce.number().int().min(1).max(12).optional(), // 4S / 6S / 8S
+  cells: z.string().regex(/^\d{1,2}(,\d{1,2})*$/).optional(), // 4S / 6S / 8S, напр. "4,6"
   minPrice: z.coerce.number().min(0).optional(), // у гривнях/доларах, не в центах
   maxPrice: z.coerce.number().min(0).optional(),
   inStock: z.enum(['true', 'false']).optional(),
@@ -41,7 +41,7 @@ export const catalogRoutes: FastifyPluginAsync = async (app) => {
             ilike(products.brand, `%${p.q.replace(/[%_]/g, '\\$&')}%`),
           )
         : undefined,
-      p.cells ? sql`${products.specs} -> 'cells' @> ${JSON.stringify(p.cells)}::jsonb` : undefined,
+      p.cells ? or(...p.cells.split(',').map((c) => sql`${products.specs} -> 'cells' @> ${JSON.stringify(Number(c))}::jsonb`)) : undefined,
       p.minPrice !== undefined ? gte(products.priceCents, Math.round(p.minPrice * 100)) : undefined,
       p.maxPrice !== undefined ? lte(products.priceCents, Math.round(p.maxPrice * 100)) : undefined,
       p.inStock === 'true' ? eq(products.inStock, true) : undefined,

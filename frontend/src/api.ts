@@ -2,6 +2,8 @@ export type Category = { id: number; slug: string; name: string; count: number }
 export type Product = {
   id: number; sku: string; categoryId: number; name: string; brand: string | null;
   description: string | null; priceCents: number; imageUrl: string | null; inStock: boolean;
+  unitLabel: string | null; cardSpecs: { label: string; value: string }[];
+  statusText: string | null; statusNote: string | null;
   specs: Record<string, string | number | boolean | (string | number)[]>;
 };
 export type ProductsPage = { items: Product[]; total: number; page: number; limit: number };

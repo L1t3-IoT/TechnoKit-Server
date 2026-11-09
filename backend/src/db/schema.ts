@@ -34,6 +34,13 @@ export const products = pgTable('products', {
   priceCents: integer('price_cents').notNull(),
   imageUrl: text('image_url'),
   inStock: boolean('in_stock').notNull().default(true),
+  // Підпис ціни на картці: "/ рама", "/ мотор" тощо
+  unitLabel: text('unit_label'),
+  // Дві ключові характеристики для картки каталогу
+  cardSpecs: jsonb('card_specs').$type<{ label: string; value: string }[]>().notNull().default([]),
+  // Статус сумісності на картці (поки статичний; далі рахуватиметься від збірки)
+  statusText: text('status_text'),
+  statusNote: text('status_note'),
   // Характеристики різні для кожної категорії, тому jsonb.
   // Напр.: { "cells": [4,6], "stack_mount": "30.5x30.5", "wheelbase_mm": 225 }
   specs: jsonb('specs').$type<Record<string, SpecValue>>().notNull().default({}),
