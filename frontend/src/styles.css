@@ -5,6 +5,7 @@
   --text: #f5f5f2; --muted: #bcc2c8; --muted-2: #a3aaaf; --faint: #717a81;
   --accent: #ff6b26; --accent-text: #ff6b26; --on-accent: #0a0b0c; --nav-line: #717a81;
   --warn-bg: #2b1b13; --warn-border: #764022; --ok: #b7d1be; --info: #bcc6d2;
+  --fail: #ff7a7a; --fail-bg: #2a1416; --fail-border: #8a2f35;
   --lesson-title: #bcc2c8;
   --radius: 4px; --radius-sm: 3px; --pad-x: 56px;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -16,6 +17,7 @@
   --text: #111827; --muted: #6b7280; --muted-2: #6b7280; --faint: #6b7280;
   --accent: #ff6b26; --accent-text: #c2410c; --on-accent: #ffffff; --nav-line: #ff6a1f;
   --warn-bg: #fff7ed; --warn-border: #f3c7a8; --ok: #166534; --info: #37414f;
+  --fail: #b91c1c; --fail-bg: #fef2f2; --fail-border: #f1b5b5;
   --lesson-title: #111315;
   color-scheme: light;
 }
@@ -266,3 +268,37 @@ button { font: inherit; color: inherit; }
   .prow { grid-template-columns: 88px 1fr; } .prow__price { align-items: flex-start; }
   .h-hero { font-size: 36px; } .h-checker { font-size: 32px; }
 }
+
+
+/* ===== Нові стани перевірки (помилка, порожній слот, очікування) ===== */
+.t-fail { color: var(--fail); } .ic-fail { color: var(--fail); }
+.legend__fail { color: var(--fail); background: var(--fail-bg) !important; }
+.prow--fail { background: var(--fail-bg); border: 1px solid var(--fail-border); }
+.prow--empty { background: transparent; border: 1px dashed var(--border); }
+.prow__img--empty { display: grid; place-items: center; color: var(--faint); background: var(--surface-2); }
+.prow__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.qty { display: inline-flex; align-items: center; gap: 4px; }
+.qty select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 4px; font: inherit; }
+.fail-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; border-radius: var(--radius-sm); background: var(--fail-bg); border: 2px solid var(--fail); }
+.idle-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 1px dashed var(--border); border-radius: var(--radius-sm); }
+.name-input { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 6px 10px; font: inherit; font-weight: 700; min-width: 280px; }
+.save-msg { margin: -12px 0 16px; }
+.checklist { margin: 18px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+.tag-approx { margin-left: 8px; padding: 1px 6px; border: 1px solid var(--warn-border); border-radius: var(--radius-sm); color: var(--accent-text); font-size: 12px; }
+.tag-approx--block { margin-left: 0; border: 0; padding: 0; color: var(--muted); }
+.pcard__status--ok { color: var(--ok); } .pcard__status--warn { color: var(--accent-text); } .pcard__status--fail { color: var(--fail); } .pcard__status--open { color: var(--info); }
+.pcard--fail { border-color: var(--fail-border); }
+.pcard a, .tag-approx a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ===== Дрони, вхід, мої збірки ===== */
+.tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+.tab { height: 36px; padding: 0 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; }
+.tab.is-active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.auth { max-width: 480px; }
+.auth > p { margin: 8px 0 22px; }
+.auth__form { display: flex; flex-direction: column; gap: 16px; }
+.auth__form label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); }
+.auth__form input { height: 44px; padding: 0 12px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font: inherit; }
+.saved { display: grid; gap: 12px; margin-top: 20px; }
+.saved__row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; }
+.saved__actions { display: flex; align-items: center; gap: 18px; }

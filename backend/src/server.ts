@@ -7,6 +7,8 @@ import { pool } from './db/index.js';
 import { authRoutes } from './routes/auth.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { buildRoutes } from './routes/builds.js';
+import { compatRoutes } from './routes/compat.js';
+import { droneRoutes } from './routes/drones.js';
 
 const app = Fastify({
   logger: { level: config.NODE_ENV === 'production' ? 'info' : 'debug' },
@@ -31,6 +33,8 @@ app.get('/api/health', async () => {
 await app.register(authRoutes, { prefix: '/api/auth' });
 await app.register(catalogRoutes, { prefix: '/api' });
 await app.register(buildRoutes, { prefix: '/api/builds' });
+await app.register(compatRoutes, { prefix: '/api/compat' });
+await app.register(droneRoutes, { prefix: '/api' });
 
 const close = async () => { await app.close(); await pool.end(); process.exit(0); };
 process.on('SIGTERM', close);

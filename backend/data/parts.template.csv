@@ -1,0 +1,2 @@
+sku,category,name,brand,description,price_usd,verified,source_url,in_stock,specs
+MO-EXAMPLE-2207,motors,Приклад 2207 1900KV,Brand,Опис мотора,19.99,false,https://example.com,true,"{""stator"":""2207"",""kv"":1900,""cells"":[6],""peak_a"":42,""motor_mount"":""16x16"",""shaft_mm"":5,""weight_g"":33,""prop_inch_range"":[5,6]}"

@@ -7,14 +7,17 @@ import '@fontsource/inter/700.css';
 import '@fontsource/inter/800.css';
 import App from './App';
 import { BuildProvider } from './state/build';
+import { AuthProvider } from './state/auth';
 import './styles.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <BuildProvider>
-        <App />
-      </BuildProvider>
+      <AuthProvider>
+        <BuildProvider>
+          <App />
+        </BuildProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

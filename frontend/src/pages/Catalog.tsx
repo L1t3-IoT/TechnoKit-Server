@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { api, formatPrice, type Category, type Product, type ProductsPage } from '../api';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { api, formatPrice, type Annotation, type Category, type Product, type ProductsPage } from '../api';
 import { Icon } from '../icons';
-import Img from '../components/Img';
+import ProductThumb from '../components/ProductThumb';
 import { useBuild } from '../state/build';
 
 const SORTS = [
@@ -10,33 +10,39 @@ const SORTS = [
   ['price_desc', 'Ціна: від високої'], ['name', 'За назвою'],
 ] as const;
 const VOLTS = [[4, '4S / 14.8 В'], [6, '6S / 22.2 В'], [8, '8S / 29.6 В']] as const;
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 9;
 
-function Card({ p, category }: { p: Product; category: string }) {
-  const { add } = useBuild();
+function Card({ p, category, note, onAdd }: { p: Product; category: string; note: Annotation | undefined; onAdd: () => void }) {
   return (
-    <article className="pcard">
-      <div className="pcard__photo">
-        {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="img" /> : <Img id="__none" label="фото" alt={p.name} />}
-      </div>
+    <article className={`pcard${note?.status === 'fail' ? ' pcard--fail' : ''}`}>
+      <div className="pcard__photo"><ProductThumb p={p} /></div>
       <div className="pcard__body">
         <div className="pcard__id">
-          <span className="muted">{category}</span>
+          <span className="muted">{category}{p.brand ? ` · ${p.brand}` : ''}</span>
           <h3>{p.name}</h3>
           <p className="muted">{p.description}</p>
         </div>
-        {p.statusText && <p className="pcard__status">{p.statusText}</p>}
-        {p.statusNote && <p className="muted">{p.statusNote}</p>}
+        {note && <p className={`pcard__status pcard__status--${note.status}`}>{note.text}</p>}
+        {note?.note && <p className="muted">{note.note}</p>}
         <div className="specs">
           {p.cardSpecs.map((s) => (<div key={s.label}><span className="muted">{s.label}</span><span>{s.value}</span></div>))}
         </div>
+        {!p.verified && <p className="muted tag-approx tag-approx--block">Орієнтовні дані — звірте з виробником{p.sourceUrl ? <> · <a href={p.sourceUrl} target="_blank" rel="noreferrer noopener">джерело ↗</a></> : null}</p>}
+        {p.verified && p.sourceUrl && <p className="muted"><a href={p.sourceUrl} target="_blank" rel="noreferrer noopener">Дані звірено · джерело ↗</a></p>}
         <div className="pcard__foot">
           <div className="price"><strong>{formatPrice(p.priceCents)}</strong><span className="muted">{p.unitLabel}</span></div>
-          <button className="btn btn--secondary btn--sm" onClick={() => add(p)}>Додати до збірки <Icon name="plus" size={15} /></button>
+          <button className="btn btn--secondary btn--sm" onClick={onAdd}>Додати до збірки <Icon name="plus" size={15} /></button>
         </div>
       </div>
     </article>
   );
+}
+
+function pageList(page: number, pages: number): (number | '…')[] {
+  const set = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages));
+  const out: (number | '…')[] = [];
+  [...set].sort((a, b) => a - b).forEach((n, i, a) => { if (i && n - a[i - 1] > 1) out.push('…'); out.push(n); });
+  return out;
 }
 
 export default function Catalog() {
@@ -44,7 +50,10 @@ export default function Catalog() {
   const [cats, setCats] = useState<Category[]>([]);
   const [data, setData] = useState<ProductsPage | null>(null);
   const [error, setError] = useState('');
-  const { parts, totalCents } = useBuild();
+  const { parts, totalCents, items, add } = useBuild();
+  const navigate = useNavigate();
+  const [notes, setNotes] = useState<Record<number, Annotation>>({});
+  const replace = params.get('replace') === '1';
 
   const category = params.get('category') ?? '';
   const q = params.get('q') ?? '';
@@ -74,6 +83,16 @@ export default function Catalog() {
       .then(setData).catch((e) => setError(e.message));
   }, [category, q, cells.join(','), inStock, sort, minPrice, maxPrice, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Статус сумісності кожної картки щодо поточної збірки
+  const buildKey = items.map((i) => `${i.product.id}x${i.quantity}`).join(',');
+  useEffect(() => {
+    if (!data?.items.length || !items.length) { setNotes({}); return; }
+    let alive = true;
+    api.annotate(items.map((i) => ({ productId: i.product.id, quantity: i.quantity })), data.items.map((p) => p.id))
+      .then((r) => alive && setNotes(r.items)).catch(() => alive && setNotes({}));
+    return () => { alive = false; };
+  }, [data, buildKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const totalAll = cats.reduce((s, c) => s + c.count, 0);
@@ -93,8 +112,8 @@ export default function Catalog() {
       </div>
 
       <div className="guide-strip">
-        <span className="muted">Вперше збираєте FPV? Дізнайтеся, як обрати сумісні деталі.</span>
-        <Link to="/learn"><b>Посібник для початківців →</b></Link>
+        <span className="muted">{replace ? 'Режим заміни: обрана деталь замінить поточну у збірці й поверне вас до перевірки.' : 'Вперше збираєте FPV? Дізнайтеся, як обрати сумісні деталі.'}</span>
+        {replace ? <Link to="/checker"><b>← До перевірки збірки</b></Link> : <Link to="/learn"><b>Посібник для початківців →</b></Link>}
       </div>
 
       <div className="cat-layout">
@@ -174,16 +193,18 @@ export default function Catalog() {
           {error && <p className="error">{error}</p>}
           {data && !data.items.length && <p className="muted">Нічого не знайдено. Спробуйте змінити фільтри.</p>}
           <div className="pgrid">
-            {data?.items.map((p) => <Card key={p.id} p={p} category={catName(p.categoryId)} />)}
+            {data?.items.map((p) => (
+              <Card key={p.id} p={p} category={catName(p.categoryId)} note={notes[p.id]}
+                onAdd={() => { add(p); if (replace) navigate('/checker'); }} />
+            ))}
           </div>
 
           <div className="pagination">
             <span className="muted">{from}–{to} із {total}</span>
             <div className="pagination__ctrl">
-              {Array.from({ length: Math.min(pages, 3) }, (_, i) => i + 1).map((n) => (
-                <button key={n} className={`pg${n === page ? ' is-active' : ''}`} onClick={() => set({ page: String(n) })}>{n}</button>
-              ))}
-              {pages > 3 && <span className="muted">…</span>}
+              {pageList(page, pages).map((n, i) => n === '…'
+                ? <span key={`e${i}`} className="muted">…</span>
+                : <button key={n} className={`pg${n === page ? ' is-active' : ''}`} onClick={() => set({ page: String(n) })}>{n}</button>)}
               <button className="btn btn--secondary btn--sm" disabled={page >= pages} onClick={() => set({ page: String(page + 1) })}>Далі <Icon name="arrowRight" size={15} /></button>
             </div>
           </div>

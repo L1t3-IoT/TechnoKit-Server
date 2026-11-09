@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/index.js';
-import { buildItems, builds, products } from '../db/schema.js';
+import { buildItems, builds, categories, products } from '../db/schema.js';
 import { requireUser } from '../lib/session.js';
 
 const idParam = z.object({ id: z.string().uuid() });
@@ -42,9 +42,10 @@ export const buildRoutes: FastifyPluginAsync = async (app) => {
     const [build] = await db.select().from(builds).where(and(eq(builds.id, id), eq(builds.userId, req.user!.id)));
     if (!build) return reply.code(404).send({ error: 'Збірку не знайдено' });
     const items = await db
-      .select({ quantity: buildItems.quantity, product: products })
+      .select({ quantity: buildItems.quantity, product: { ...getTableColumns(products), categorySlug: categories.slug } })
       .from(buildItems)
       .innerJoin(products, eq(products.id, buildItems.productId))
+      .innerJoin(categories, eq(categories.id, products.categoryId))
       .where(eq(buildItems.buildId, id));
     return { ...build, items };
   });
@@ -68,6 +69,16 @@ export const buildRoutes: FastifyPluginAsync = async (app) => {
     } catch {
       return reply.code(400).send({ error: 'Невідома деталь або дублікати у списку' });
     }
+    return { ok: true };
+  });
+
+  app.patch('/:id', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const body = nameBody.safeParse(req.body);
+    if (!body.success) return reply.code(400).send({ error: 'Вкажіть назву збірки' });
+    const res = await db.update(builds).set({ name: body.data.name })
+      .where(and(eq(builds.id, id), eq(builds.userId, req.user!.id))).returning({ id: builds.id });
+    if (!res.length) return reply.code(404).send({ error: 'Збірку не знайдено' });
     return { ok: true };
   });
 

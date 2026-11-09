@@ -14,3 +14,8 @@ export const images: Record<string, string | null> = {
   // Перевірка збірки: картки «Усуньте проблеми» (391×130)
   altProp: null, altBattery: null, altWiring: null,
 };
+
+/** Запасне зображення категорії, коли в деталі немає власного фото. */
+export const categoryImage: Record<string, string> = {
+  frames: 'partFrame', motors: 'partMotor', esc: 'partEsc', 'flight-controllers': 'partFc', props: 'partProp', batteries: 'partBattery',
+};

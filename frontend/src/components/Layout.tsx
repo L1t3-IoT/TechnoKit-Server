@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { api, type User } from '../api';
 import { Icon, Logo } from '../icons';
+import { useAuth } from '../state/auth';
 import { useBuild } from '../state/build';
 
 const NAV = [
   { to: '/', label: 'Головна', end: true },
   { to: '/catalog', label: 'Каталог' },
   { to: '/checker', label: 'Перевірка збірки' },
+  { to: '/drones', label: 'Дрони' },
   { to: '/learn', label: 'Навчання' },
   { to: '/notes', label: 'Нотатки' },
 ];
@@ -25,12 +26,11 @@ function useTheme() {
 }
 
 export default function Layout() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const [theme, toggleTheme] = useTheme();
   const { parts, units } = useBuild();
   const { pathname } = useLocation();
 
-  useEffect(() => { api.me().then((r) => setUser(r.user)).catch(() => setUser(null)); }, []);
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
 
   return (
@@ -47,11 +47,12 @@ export default function Layout() {
           </nav>
           <div className="account">
             {user ? (
-              <button className="icon-btn" title={`${user.email} — вийти`} onClick={() => api.logout().then(() => setUser(null))}>
-                <Icon name="user" size={19} />
-              </button>
+              <>
+                <Link to="/builds" className="icon-btn" title={`${user.email} — мої збірки`} aria-label="Мої збірки"><Icon name="user" size={19} /></Link>
+                <button className="link-btn" onClick={() => logout()}>Вийти</button>
+              </>
             ) : (
-              <span className="icon-btn" title="Вхід — незабаром"><Icon name="user" size={19} /></span>
+              <Link to="/login" className="icon-btn" title="Увійти" aria-label="Увійти"><Icon name="user" size={19} /></Link>
             )}
             <span className="account__divider" />
             <Link to="/checker" className="bag" aria-label="Збірка"><Icon name="bag" size={19} /><span>{pad(units)}</span></Link>
@@ -69,6 +70,7 @@ export default function Layout() {
             <span>Розділи</span>
             <Link to="/catalog">Каталог деталей</Link>
             <Link to="/checker">Перевірка збірки</Link>
+            <Link to="/drones">Дрони й готові збірки</Link>
             <Link to="/learn">Навчання</Link>
           </div>
           <div className="footer__col">
@@ -77,10 +79,10 @@ export default function Layout() {
             <Link to="/notes">Безпечне використання LiPo</Link>
             <Link to="/notes">Нотатки</Link>
           </div>
-          <p className="footer__note">Макет інтерфейсу. Каталог, керування збіркою й перевірка сумісності наведені для прикладу.</p>
+          <p className="footer__note">Дані деталей зібрано зі сторінок виробників і магазинів; ціни орієнтовні. Перевірка сумісності — попередня оцінка, не допуск до польоту.</p>
         </div>
         <div className="footer__register">
-          <span>© 2026 TechnoKit / демонстраційний каталог</span>
+          <span>© 2026 TechnoKit</span>
           <button className="link-btn" onClick={toggleTheme}>{theme === 'dark' ? 'Світла тема' : 'Темна тема'}</button>
         </div>
       </footer>

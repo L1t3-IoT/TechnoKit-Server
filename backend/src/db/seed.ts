@@ -1,8 +1,9 @@
-import { sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { db, pool } from './index.js';
-import { categories, products } from './schema.js';
-
-type NewProduct = typeof products.$inferInsert;
+import { categories, droneParts, drones, products } from './schema.js';
+import { cardSpecs, UNIT_LABEL } from './card.js';
+import { parts } from './data/parts.js';
+import { drones as droneSeeds } from './data/drones.js';
 
 const cats = [
   { slug: 'frames', name: 'Рами', sortOrder: 1 },
@@ -17,34 +18,45 @@ await db.insert(categories).values(cats).onConflictDoUpdate({
   target: categories.slug,
   set: { name: sql`excluded.name`, sortOrder: sql`excluded.sort_order` },
 });
+const catRows = await db.select().from(categories);
+const catId = (slug: string) => catRows.find((c) => c.slug === slug)!.id;
 
-const rows = await db.select().from(categories);
-const id = (slug: string) => rows.find((c) => c.slug === slug)!.id;
+// Прибираємо вигадані демо-товари з макета (якщо їх ніхто не додав у збірку).
+const DEMO = ['FR-AX5', 'MO-V2207', 'ESC-P55', 'FC-NF7', 'PR-T51', 'BA-V6S13'];
+try { await db.delete(products).where(inArray(products.sku, DEMO)); } catch { console.warn('Демо-товари залишено: вони є у чиїйсь збірці'); }
 
-const items: NewProduct[] = [
-  { sku: 'FR-AX5', unitLabel: "/ рама", cardSpecs: [{ label: "Колісна база", value: "225 мм" }, { label: "Кріплення Stack", value: "30.5 × 30.5" }], statusText: "Підходить до збірки", statusNote: null, categoryId: id('frames'), name: 'AX5 Carbon Frame', description: 'Міцна основа для 5-дюймової збірки.', priceCents: 5900,
-    specs: { wheelbase_mm: 225, stack_mount: '30.5x30.5', prop_inch: 5 } },
-  { sku: 'MO-V2207', unitLabel: "/ мотор", cardSpecs: [{ label: "Живлення", value: "6S LiPo" }, { label: "Кріплення", value: "16 × 16 мм" }], statusText: "Перевірте струм", statusNote: null, categoryId: id('motors'), name: 'Vector 2207 / 1750KV', description: 'Мотор із низьким KV для платформи 6S.', priceCents: 1990,
-    specs: { cells: [6], motor_mount: '16x16', kv: 1750 } },
-  { sku: 'ESC-P55', unitLabel: "/ плата", cardSpecs: [{ label: "Струм", value: "55 А на канал" }, { label: "Живлення", value: "3–6S LiPo" }], statusText: "Підходить до збірки", statusNote: "Кріплення сумісні; перевірте проводку.", categoryId: id('esc'), name: 'Pulse 55A / 4-in-1 ESC', description: 'Чотириканальний регулятор обертів.', priceCents: 6490,
-    specs: { cells: [3, 4, 5, 6], continuous_a: 55, stack_mount: '30.5x30.5' } },
-  { sku: 'FC-NF7', unitLabel: "/ плата", cardSpecs: [{ label: "Процесор", value: "Серія F7" }, { label: "Кріплення", value: "30.5 × 30.5" }], statusText: "Підходить до збірки", statusNote: "Кріплення сумісні; перевірте проводку.", categoryId: id('flight-controllers'), name: 'Nexus F7 Controller', description: 'Польотний контролер F7 для FPV-дронів.', priceCents: 5490,
-    specs: { cpu: 'F7', stack_mount: '30.5x30.5' } },
-  { sku: 'PR-T51', unitLabel: "/ комплект із 4 шт.", cardSpecs: [{ label: "Діаметр", value: "5.1 дюйма" }, { label: "Посадковий отвір", value: "5 мм" }], statusText: "Підходить до збірки", statusNote: null, categoryId: id('props'), name: 'Triad 5.1 × 4.3 × 3', description: 'Трилопатеві пропелери з отвором 5 мм.', priceCents: 349,
-    specs: { diameter_inch: 5.1, shaft_mm: 5, prop_inch: 5 } },
-  { sku: 'BA-V6S13', unitLabel: "/ акумулятор", cardSpecs: [{ label: "Напруга", value: "22.2 В номінальна" }, { label: "Заявлений рейтинг", value: "100C" }], statusText: "Перевірте струм", statusNote: null, categoryId: id('batteries'), name: 'Volt 6S / 1300mAh', description: 'Акумулятор LiPo 6S для FPV-дронів.', priceCents: 5290,
-    specs: { cells: [6], capacity_mah: 1300, c_rating: 100, nominal_v: 22.2 } },
-];
-
-await db.insert(products).values(items).onConflictDoUpdate({
+const rows = parts.map((p) => ({
+  sku: p.sku, categoryId: catId(p.category), name: p.name, brand: p.brand, description: p.description,
+  priceCents: Math.round(p.priceUsd * 100), inStock: p.inStock ?? true, unitLabel: UNIT_LABEL[p.category] ?? null,
+  cardSpecs: cardSpecs(p.category, p.specs), statusText: null, statusNote: null,
+  specs: p.specs, verified: p.verified, sourceUrl: p.url ?? null,
+}));
+await db.insert(products).values(rows).onConflictDoUpdate({
   target: products.sku,
   set: {
-    name: sql`excluded.name`, description: sql`excluded.description`,
-    priceCents: sql`excluded.price_cents`, specs: sql`excluded.specs`,
-    unitLabel: sql`excluded.unit_label`, cardSpecs: sql`excluded.card_specs`,
-    statusText: sql`excluded.status_text`, statusNote: sql`excluded.status_note`,
+    categoryId: sql`excluded.category_id`, name: sql`excluded.name`, brand: sql`excluded.brand`, description: sql`excluded.description`,
+    priceCents: sql`excluded.price_cents`, specs: sql`excluded.specs`, unitLabel: sql`excluded.unit_label`,
+    cardSpecs: sql`excluded.card_specs`, statusText: sql`excluded.status_text`, statusNote: sql`excluded.status_note`,
+    verified: sql`excluded.verified`, sourceUrl: sql`excluded.source_url`,
   },
 });
 
-console.log(`Seed: ${cats.length} категорій, ${items.length} деталей`);
+const prodRows = await db.select({ id: products.id, sku: products.sku }).from(products);
+const pid = (sku: string) => {
+  const r = prodRows.find((p) => p.sku === sku);
+  if (!r) throw new Error(`Невідомий SKU у дронах: ${sku}`);
+  return r.id;
+};
+
+for (const [i, d] of droneSeeds.entries()) {
+  const values = {
+    slug: d.slug, name: d.name, brand: d.brand ?? null, kind: d.kind, segment: d.segment, propInch: d.propInch, cells: d.cells,
+    weightG: d.weightG ?? null, summary: d.summary, specs: d.specs, verified: d.verified, sourceUrl: d.url ?? null, sortOrder: i,
+  };
+  const [row] = await db.insert(drones).values(values).onConflictDoUpdate({ target: drones.slug, set: values }).returning({ id: drones.id });
+  await db.delete(droneParts).where(eq(droneParts.droneId, row.id));
+  if (d.parts?.length) await db.insert(droneParts).values(d.parts.map((p) => ({ droneId: row.id, productId: pid(p.sku), quantity: p.quantity })));
+}
+
+console.log(`Seed: ${cats.length} категорій, ${rows.length} деталей, ${droneSeeds.length} дронів`);
 await pool.end();

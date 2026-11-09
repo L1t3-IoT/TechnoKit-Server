@@ -15,6 +15,13 @@
       "when": 1794215478284,
       "tag": "0001_same_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794254750933,
+      "tag": "0002_drones_and_verification",
+      "breakpoints": true
     }
   ]
 }
