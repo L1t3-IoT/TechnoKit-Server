@@ -84,10 +84,8 @@ export default function Checker() {
   const byCat = (slug: string) => items.find((i) => i.product.categorySlug === slug);
   const aio = byCat('flight-controllers')?.product.specs.aio === true;
   const slots = SLOTS.filter(([s]) => !(s === 'esc' && aio));
-  const problems = report?.checks.filter((c) => c.status === 'fail' || c.status === 'warn') ?? [];
   const rest = report?.checks.filter((c) => c.status !== 'fail' && c.status !== 'warn') ?? [];
   const ordered = report ? [...report.checks.filter((c) => c.status === 'fail'), ...report.checks.filter((c) => c.status === 'warn'), ...rest] : [];
-  void problems;
 
   const save = async () => {
     if (!user) { navigate('/login?next=/checker'); return; }

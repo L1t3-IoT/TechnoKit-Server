@@ -30,8 +30,9 @@ export default function Layout() {
   const [theme, toggleTheme] = useTheme();
   const { parts, units } = useBuild();
   const { pathname } = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); setMenuOpen(false); }, [pathname]);
 
   return (
     <>
@@ -46,6 +47,11 @@ export default function Layout() {
             ))}
           </nav>
           <div className="account">
+            <button className="icon-btn burger" aria-label={menuOpen ? 'Закрити меню' : 'Відкрити меню'} aria-expanded={menuOpen} aria-controls="mobile-nav" onClick={() => setMenuOpen((v) => !v)}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                {menuOpen ? <path d="M5 5l14 14M19 5L5 19" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+              </svg>
+            </button>
             {user ? (
               <>
                 <Link to="/builds" className="icon-btn" title={`${user.email} — мої збірки`} aria-label="Мої збірки"><Icon name="user" size={19} /></Link>
@@ -59,6 +65,13 @@ export default function Layout() {
             <Link to="/checker" className="btn btn--secondary btn--sm">Моя збірка / {pad(parts)}</Link>
           </div>
         </div>
+        {menuOpen && (
+          <nav id="mobile-nav" className="mobile-nav" aria-label="Мобільна навігація">
+            {NAV.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => `mobile-nav__item${isActive ? ' is-active' : ''}`}>{l.label}</NavLink>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main><Outlet /></main>
