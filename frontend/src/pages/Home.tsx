@@ -26,14 +26,14 @@ const leaders = [
 const pct = (v: number, base: number) => `${(v / base) * 100}%`;
 
 export default function Home() {
-  const [stats, setStats] = useState<{ products: number; categories: number; voltages: number } | null>(null);
+  const [stats, setStats] = useState<{ products: number; categories: number } | null>(null);
   useEffect(() => { api.stats().then(setStats).catch(() => undefined); }, []);
   return (
     <>
       <section className="hero">
         <div className="hero__intro">
           <p className="muted">Каталог FPV-компонентів</p>
-          <h1 className="h-hero">Зберіть свій дрон<br />із сумісних<br />деталей</h1>
+          <h1 className="h-hero">Зберіть свій дрон</h1>
           <p className="hero__lead">Обирайте раму, мотори, ESC, польотний контролер, пропелери й акумулятор. Порівнюйте характеристики та розраховуйте вартість збірки в одному місці.</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Link to="/catalog" className="btn btn--primary">Почати збірку <Icon name="arrowRight" /></Link>
@@ -42,7 +42,6 @@ export default function Home() {
           <dl className="stats">
             <div><dt>{stats?.products ?? '—'}</dt><dd>компонентів</dd></div>
             <div><dt>{stats?.categories ?? '—'}</dt><dd>категорій</dd></div>
-            <div><dt>{stats?.voltages ?? '—'}</dt><dd>типи напруги</dd></div>
           </dl>
         </div>
 

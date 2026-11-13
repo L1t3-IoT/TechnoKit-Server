@@ -176,7 +176,7 @@ export default function Catalog() {
 
         <section className="results">
           <div className="toolbar">
-            <span className="muted">{data ? `Показано ${data.items.length} із ${total} деталей` : 'Завантаження…'}</span>
+            <span className="muted">{data ? (total ? `Показано ${(page - 1) * PAGE_SIZE + 1}–${(page - 1) * PAGE_SIZE + data.items.length} із ${total} деталей` : 'Нічого не знайдено') : 'Завантаження…'}</span>
             <div className="sort">
               <span className="muted">Сортування</span>
               <label className="select">
